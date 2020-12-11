@@ -51,7 +51,7 @@ def add_watermark(input_image: Image,
     while True:
         font = ImageFont.truetype(font_file, size)
         w, line_height = font.getsize('摄影/后期：@02_yuyuko')
-        if line_height > min(*input_image.size) * 0.05 * font_size:
+        if line_height > min(*input_image.size) * 0.04 * font_size:
             break
         del font
         size += 2
@@ -112,7 +112,7 @@ def add_watermark(input_image: Image,
 @click.option('-F', '--font-family', default='字心坊初恋物语, Hiragino Sans GB')
 @click.option('-S', '--font-size', type=float, default=1.0)
 @click.option('-O', '--opacity', type=float, default=0.75)
-@click.option('--line-spacing', type=float, default=0.25)
+@click.option('--line-spacing', type=float, default=0.2)
 @click.option('--shadow-offset', type=float, default=0.04)
 @click.option('--shadow-blur-radius', type=float, default=0.05)
 @click.option('-i', '--input-file', required=False)
