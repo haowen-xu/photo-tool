@@ -117,7 +117,7 @@ def add_watermark(input_image: Image,
 @click.option('--shadow-blur-radius', type=float, default=0.05)
 @click.option('-i', '--input-file', required=False)
 @click.option('-o', '--output-file', required=False)
-@click.option('-q', '--quality', type=int, default=100)
+@click.option('-q', '--quality', type=int, default=95)
 @click.argument('batch_files', nargs=-1)
 def main(text, position, font_family, font_size, opacity, line_spacing,
          shadow_offset, shadow_blur_radius, input_file, output_file, quality,
@@ -148,7 +148,8 @@ def main(text, position, font_family, font_size, opacity, line_spacing,
 
                     input_image = Image.open(input_file)
                     output_image = add_watermark(input_image, font_file=font_file, **options)
-                    output_image.save(output_file, quality=quality, optimize=True, progressive=True)
+                    output_image.save(output_file, quality=quality, optimize=True,
+                                      progressive=True, subsampling=0)
 
                     input_image.close()
                     output_image.close()
@@ -176,7 +177,8 @@ def main(text, position, font_family, font_size, opacity, line_spacing,
         }
         input_image = Image.open(input_file)
         output_image = add_watermark(input_image, font_file=font_file, **options)
-        output_image.save(output_file, quality=quality, optimize=True, progressive=True)
+        output_image.save(output_file, quality=quality, optimize=True,
+                          progressive=True, subsampling=0)
 
         input_image.close()
         output_image.close()
