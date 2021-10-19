@@ -10,6 +10,11 @@ def get_font(family: str) -> str:
             '/System/Library/Fonts',
             os.path.expanduser('~/Library/Fonts')
         ]
+    elif sys.platform == 'linux':
+        search_dirs = [
+            '/usr/share/fonts',
+            os.path.expanduser('~/.fonts')
+        ]
     else:
         raise RuntimeError(f'Not supported platform: {sys.platform}')
 
