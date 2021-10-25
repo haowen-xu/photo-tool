@@ -1,9 +1,11 @@
 import codecs
 import json
 import os
+from tempfile import TemporaryDirectory
 from typing import *
 
 import click
+import ffmpeg
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageChops, ImageFilter
 
 from photo_tool.utils import *
@@ -106,6 +108,48 @@ def add_watermark(input_image: Image,
     return im
 
 
+def run_job(input_file, output_file, font_file, quality, options):
+    input_ext = os.path.splitext(input_file)[-1].lower()
+    input_image = output_image = None
+
+    try:
+
+        if input_ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+            input_image = Image.open(input_file)
+            output_image = add_watermark(input_image, font_file=font_file, **options)
+            output_image.save(output_file, quality=quality, optimize=True,
+                              progressive=True, subsampling=0)
+
+        elif input_ext in ('.avi', '.m4a', '.mkv', '.mov', '.mp4', '.wmv'):
+            # probe size
+            probe = ffmpeg.probe(input_file)
+            video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+            width = int(video_stream['width'])
+            height = int(video_stream['height'])
+
+            # generate the watermark png
+            input_image = Image.new('RGBA', (width, height))
+            output_image = add_watermark(input_image, font_file=font_file, **options)
+
+            with TemporaryDirectory() as temp_dir:
+                png_file = os.path.join(temp_dir, 'watermark.png')
+                output_image.save(png_file, format='PNG')
+
+                # now render the video
+                ffmpeg.filter([ffmpeg.input(input_file), ffmpeg.input(png_file)], 'overlay', 0, 0). \
+                    output(output_file). \
+                    run()
+    
+        else:
+            raise IOError(f'Unsupported file extension: {input_ext}')
+
+    finally:
+        if input_image is not None:
+            input_image.close()
+        if output_image is not None:
+            output_image.close()
+
+
 @click.command()
 @click.option('-t', '--text', required=False, multiple=True)
 @click.option('-p', '--position', default='right bottom')
@@ -145,14 +189,7 @@ def main(text, position, font_family, font_size, opacity, line_spacing,
 
                     if input_file == output_file:
                         raise IOError('`input_file` == `output_file`, which is not allowed.')
-
-                    input_image = Image.open(input_file)
-                    output_image = add_watermark(input_image, font_file=font_file, **options)
-                    output_image.save(output_file, quality=quality, optimize=True,
-                                      progressive=True, subsampling=0)
-
-                    input_image.close()
-                    output_image.close()
+                    run_job(input_file, output_file, font_file, quality, options)
 
     else:
         if not text or input_file is None or output_file is None:
@@ -175,13 +212,7 @@ def main(text, position, font_family, font_size, opacity, line_spacing,
             'shadow_offset': shadow_offset,
             'shadow_blur_radius': shadow_blur_radius,
         }
-        input_image = Image.open(input_file)
-        output_image = add_watermark(input_image, font_file=font_file, **options)
-        output_image.save(output_file, quality=quality, optimize=True,
-                          progressive=True, subsampling=0)
-
-        input_image.close()
-        output_image.close()
+        run_job(input_file, output_file, font_file, quality, options)
 
         options['font_family'] = font_family
         options['output_file'] = output_file
