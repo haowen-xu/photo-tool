@@ -1,6 +1,7 @@
 import codecs
 import json
 import os
+import subprocess
 from tempfile import TemporaryDirectory
 from typing import *
 
@@ -136,9 +137,29 @@ def run_job(input_file, output_file, font_file, quality, options, overwrite):
                 output_image.save(png_file, format='PNG')
 
                 # now render the video
-                ffmpeg.filter([ffmpeg.input(input_file), ffmpeg.input(png_file)], 'overlay', 0, 0). \
-                    output(output_file). \
-                    run(overwrite_output=overwrite)
+                subprocess.check_call(
+                    ['ffmpeg'] + (['-y'] if overwrite else []) +
+                    [
+                        '-i', input_file, '-i', png_file,
+                        '-filter_complex', '[0]overlay=x=0:y=0[out]',
+                        '-map', '[out]', '-map', '0:a?',
+                        output_file,
+                    ]
+                )
+
+                # input_video = ffmpeg.input(input_file)
+                # ffmpeg.concat(
+                #         ffmpeg.filter(
+                #             [
+                #                 input_video.video, 
+                #                 ffmpeg.input(png_file).video
+                #             ], 
+                #             'overlay', 0, 0
+                #         ),
+                #         input_video.audio
+                #     ). \
+                #     output(output_file). \
+                #     run(overwrite_output=overwrite)
     
         else:
             raise IOError(f'Unsupported file extension: {input_ext}')
