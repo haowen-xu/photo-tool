@@ -108,7 +108,7 @@ def add_watermark(input_image: Image,
     return im
 
 
-def run_job(input_file, output_file, font_file, quality, options):
+def run_job(input_file, output_file, font_file, quality, options, overwrite):
     input_ext = os.path.splitext(input_file)[-1].lower()
     input_image = output_image = None
 
@@ -138,7 +138,7 @@ def run_job(input_file, output_file, font_file, quality, options):
                 # now render the video
                 ffmpeg.filter([ffmpeg.input(input_file), ffmpeg.input(png_file)], 'overlay', 0, 0). \
                     output(output_file). \
-                    run()
+                    run(overwrite_output=overwrite)
     
         else:
             raise IOError(f'Unsupported file extension: {input_ext}')
@@ -189,7 +189,7 @@ def main(text, position, font_family, font_size, opacity, line_spacing,
 
                     if input_file == output_file:
                         raise IOError('`input_file` == `output_file`, which is not allowed.')
-                    run_job(input_file, output_file, font_file, quality, options)
+                    run_job(input_file, output_file, font_file, quality, options, overwrite=True)
 
     else:
         if not text or input_file is None or output_file is None:
@@ -212,7 +212,7 @@ def main(text, position, font_family, font_size, opacity, line_spacing,
             'shadow_offset': shadow_offset,
             'shadow_blur_radius': shadow_blur_radius,
         }
-        run_job(input_file, output_file, font_file, quality, options)
+        run_job(input_file, output_file, font_file, quality, options, overwrite=False)
 
         options['font_family'] = font_family
         options['output_file'] = output_file
