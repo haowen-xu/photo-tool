@@ -128,7 +128,7 @@ def run_job(input_file, output_file, font_file, quality, options, overwrite):
             height = int(video_stream['height'])
 
             # generate the watermark png
-            input_image = Image.new('RGBA', (width, height))
+            input_image = Image.new(mode='RGBA', size=(width, height), color=(255, 255, 255, 0))
             output_image = add_watermark(input_image, font_file=font_file, **options)
 
             with TemporaryDirectory() as temp_dir:
